@@ -82,6 +82,5 @@ class Decoder(nn.Module):
         x = self.decoder_block_1(x)      # -> (40, 40, 32)
         x = self.decoder_block_2(x)      # -> (160, 160, 8)
         x = self.decoder_block_3(x)      # -> (640, 640, 3)
-        x = self.sigmoid(x)
+        x = self.sigmoid(x)              # -> (640, 640, 3)
         return x
-

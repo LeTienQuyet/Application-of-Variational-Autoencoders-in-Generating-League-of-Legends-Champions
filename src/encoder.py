@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
-class Decoder_Block(nn.Module):
+class Encoder_Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding):
-        super(Decoder_Block, self).__init__()
+        super(Encoder_Block, self).__init__()
         self.conv1 = nn.Conv2d(
             in_channels=in_channels, out_channels=int(out_channels/2),
             kernel_size=kernel_size, stride=int(stride/2),
@@ -32,18 +32,18 @@ class Decoder_Block(nn.Module):
         x = self.pooling(x)
         return x
 
-class Decoder(nn.Module):
+class Encoder(nn.Module):
     def __init__(self, laten_dim):
-        super(Decoder, self).__init__()
-        self.decoder_block_1 = Decoder_Block(
+        super(Encoder, self).__init__()
+        self.encoder_block_1 = Encoder_Block(
             in_channels=3, out_channels=8,
             kernel_size=3, stride=2, padding=1
         )
-        self.decoder_block_2 = Decoder_Block(
+        self.encoder_block_2 = Encoder_Block(
             in_channels=8, out_channels=32,
             kernel_size=3, stride=2, padding=1
         )
-        self.decoder_block_3 = Decoder_Block(
+        self.encoder_block_3 = Encoder_Block(
             in_channels=32, out_channels=128,
             kernel_size=3, stride=2, padding=1
         )
@@ -67,15 +67,15 @@ class Decoder(nn.Module):
             in_features=128,
             out_features=laten_dim
         )
-        self.dropout_1 = nn.Dropout(p=0.5)
-        self.dropout_2 = nn.Dropout(p=0.5)
-        self.dropout_3 = nn.Dropout(p=0.5)
+        self.dropout_1 = nn.Dropout(p=0.25)
+        self.dropout_2 = nn.Dropout(p=0.25)
+        self.dropout_3 = nn.Dropout(p=0.25)
 
     def forward(self, x):
         "Image shape = (640, 640, 3)"
-        x = self.decoder_block_1(x) # -> (160, 160, 8)
-        x = self.decoder_block_2(x) # -> (40, 40, 32)
-        x = self.decoder_block_3(x) # -> (10, 10, 128)
+        x = self.encoder_block_1(x) # -> (160, 160, 8)
+        x = self.encoder_block_2(x) # -> (40, 40, 32)
+        x = self.encoder_block_3(x) # -> (10, 10, 128)
         x = self.pooling(x)         # -> (5, 5, 128)
         x = x.view(x.size(0), -1)   # -> (3200)
         x = self.dropout_1(x)       # -> (3200)

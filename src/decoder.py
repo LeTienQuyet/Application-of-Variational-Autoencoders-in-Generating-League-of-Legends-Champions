@@ -40,38 +40,49 @@ class Decoder(nn.Module):
             kernel_size=3, stride=2, padding=1
         )
         self.decoder_block_2 = Decoder_Block(
-            in_channels=8, out_channels=16,
+            in_channels=8, out_channels=32,
             kernel_size=3, stride=2, padding=1
         )
         self.decoder_block_3 = Decoder_Block(
-            in_channels=16, out_channels=64,
+            in_channels=32, out_channels=128,
             kernel_size=3, stride=2, padding=1
         )
         self.pooling = nn.MaxPool2d(
             kernel_size=2,
             stride=2
         )
-        self.linear = nn.Linear(
-            in_features=1600,
-            out_features=512,
+        self.linear_1 = nn.Linear(
+            in_features=3200,
+            out_features=256,
+        )
+        self.linear_2 = nn.Linear(
+            in_features=256,
+            out_features=128,
         )
         self.mu = nn.Linear(
-            in_features=512,
+            in_features=128,
             out_features=laten_dim
         )
         self.log_var = nn.Linear(
-            in_features=512,
+            in_features=128,
             out_features=laten_dim
         )
+        self.dropout_1 = nn.Dropout(p=0.5)
+        self.dropout_2 = nn.Dropout(p=0.5)
+        self.dropout_3 = nn.Dropout(p=0.5)
 
     def forward(self, x):
         "Image shape = (640, 640, 3)"
-        x = self.decoder_block_1(x) " -> (160, 160, 8)      "
-        x = self.decoder_block_2(x) " -> (40, 40, 16)       "
-        x = self.decoder_block_3(x) " -> (10, 10, 64)       "
-        x = self.pooling(x)         " -> (5, 5, 64)         "
-        x = x.view(x.size(0), -1)   " -> (1600)             "
-        x = self.linear(x)          " -> (512)              "
-        mu = self.mu(x)             " -> (latent_dim = 64)  "
-        log_var = self.log_var(x)   " -> (latent_dim = 64)  "
+        x = self.decoder_block_1(x) # -> (160, 160, 8)
+        x = self.decoder_block_2(x) # -> (40, 40, 32)
+        x = self.decoder_block_3(x) # -> (10, 10, 128)
+        x = self.pooling(x)         # -> (5, 5, 128)
+        x = x.view(x.size(0), -1)   # -> (3200)
+        x = self.dropout_1(x)       # -> (3200)
+        x = self.linear_1(x)        # -> (256)
+        x = self.dropout_2(x)       # -> (256)
+        x = self.linear_2(x)        # -> (128)
+        x = self.dropout_3(x)       # -> (128)
+        mu = self.mu(x)             # -> (latent_dim=64)
+        log_var = self.log_var(x)   # -> (latent_dim=64)
         return mu, log_var

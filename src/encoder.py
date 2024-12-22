@@ -33,7 +33,7 @@ class Encoder_Block(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self, laten_dim):
+    def __init__(self, latent_dim):
         super(Encoder, self).__init__()
         self.encoder_block_1 = Encoder_Block(
             in_channels=3, out_channels=8,
@@ -61,11 +61,11 @@ class Encoder(nn.Module):
         )
         self.mu = nn.Linear(
             in_features=128,
-            out_features=laten_dim
+            out_features=latent_dim
         )
         self.log_var = nn.Linear(
             in_features=128,
-            out_features=laten_dim
+            out_features=latent_dim
         )
         self.dropout_1 = nn.Dropout(p=0.25)
         self.dropout_2 = nn.Dropout(p=0.25)

@@ -9,7 +9,7 @@ This repo implements **a Variational Autoencoder (VAE)** model using the PyTorch
 * [Results](#results)
 * [About Data](#about-data)
 * [Details of Traning](#details-of-training)
-* [Generate New Champion](#generate-new-champion)
+* [Quick Start](#quick-start)
 
 ## VAE Architecture
 
@@ -20,9 +20,9 @@ This repo implements **a Variational Autoencoder (VAE)** model using the PyTorch
 ## Results
 
 ## About Data
-The data was collected from the official [**League of Legends**](https://www.leagueoflegends.com/en-us/champions/) website, featuring **169** different champions with a total of **1,678** images sized at **1215x717** pixels. 
+The data was collected from the official [**League of Legends**](https://www.leagueoflegends.com/en-us/champions/) website, featuring **169** different champions with a total of **1892** images sized at **1215x717** pixels. 
 ![Pirate Ryze Original Image](./images/Ryze_8.jpg)
-These images will be resized to **640x640** pixels to fit the network design. You can adjust the download image size in the `crawl.py` file, but it is necessary to modify the network design to ensure compatibility with the new dimensions.
+These images will be resized to **224x224** pixels to fit the network design. You can adjust the download image size in the `crawl.py` file, but it is necessary to modify the network design to ensure compatibility with the new dimensions.
 
 ## Details of Training
 Here is the information I have set up for training the model:

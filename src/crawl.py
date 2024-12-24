@@ -6,7 +6,7 @@ import time
 import os
 import requests
 
-def main(image_size=(640, 640)):
+def main(image_size=(224, 224)):
     web_url = "https://www.leagueoflegends.com/en-us/champions/"
     response = requests.get(web_url)
 
@@ -36,7 +36,6 @@ def main(image_size=(640, 640)):
                 image_resized.save(image_path, "JPEG")
                 total_images += 1
 
-                time.sleep(5)
     print(f"Data has {len(champion_names)} champions with {total_images} images !!!")
     print("DONE !!!")
 

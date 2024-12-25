@@ -74,7 +74,7 @@ def train_model(num_epochs, model, train_dataloader, optimizer, alpha, device, p
             torch.save(model.state_dict(), os.path.join(path_to_checkpoint, "best_model.pt"))
             print(f"    Save Model in Epoch {epoch+1}")
         torch.save(model.state_dict(), os.path.join(path_to_checkpoint, "last_model.pt"))
-        print(f"    Training loss = {total_train_loss:.5f}")
+        print(f"    Training loss = {(total_train_loss/len(train_dataloader.dataset)):.5f}")
 
     epochs = range(1, num_epochs + 1)
     plt.figure(figsize=(10, 5))
@@ -102,7 +102,7 @@ def main(num_epochs, latent_dim, batch_size, lr, alpha, path_to_checkpoint, path
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hyper-parameters for training")
     parser.add_argument("--epoch", type=int, help="No. of epochs for training", default=50)
-    parser.add_argument("--latent_dim", type=int, help="No. dim of latent space", default=64)
+    parser.add_argument("--latent_dim", type=int, help="No. dim of latent space", default=256)
     parser.add_argument("--lr", type=float, help="Learning rate", default=1e-4)
     parser.add_argument("--batch_size", type=int, help="Batch size", default=64)
     parser.add_argument("--alpha", type=float, help="Loss factor", default=3.0)

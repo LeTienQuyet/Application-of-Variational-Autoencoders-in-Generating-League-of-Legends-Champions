@@ -24,6 +24,7 @@ The data was collected from [**CommunityDragon**](https://www.communitydragon.or
 
 ![Image 1](./data/train/1_13.png) ![Image 2](./data/train/1_14.png)
 
+The collected dataset is divided into two datasets: the training set and the validation set, containing **5,300** and **1,506** images, respectively.  
 These images will be resized to **224x224** pixels to fit the network design. You can adjust the download image size in the `crawl.py` file, but it is necessary to modify the network design to ensure compatibility with the new dimensions.
 
 ## Details of Training

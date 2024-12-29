@@ -1,19 +1,19 @@
-from encoder import Encoder
-from decoder import Decoder
+from src.models.encoder import Encoder
+from src.models.decoder import Decoder
 
 import torch
 import torch.nn as nn
 
 class VAE(nn.Module):
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim, num_channels):
         super(VAE, self).__init__()
-        self.encoder = Encoder(latent_dim)
-        self.decoder = Decoder(latent_dim)
+        self.encoder = Encoder(latent_dim, num_channels)
+        self.decoder = Decoder(latent_dim, num_channels)
 
     def reparameterize(self, mu, logvar):
-        std_devi = torch.exp(0.5 * logvar)
-        epsilon = torch.randn_like(std_devi)
-        z = mu + epsilon * std_devi
+        std = torch.exp(0.5 * logvar)
+        epsilon = torch.randn_like(std)
+        z = mu + epsilon * std
         return z
 
     def forward(self, x):

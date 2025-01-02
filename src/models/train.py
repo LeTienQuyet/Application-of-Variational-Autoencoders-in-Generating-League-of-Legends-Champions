@@ -123,7 +123,7 @@ def train_model(num_epochs, model, train_dataloader, val_dataloader, optimizer, 
 
         print(f"    Avg Total Loss        : train = {avg_train_loss:.4f}, val = {avg_val_loss:.4f}")
         print(f"    Avg Reconstructed Loss: train = {avg_train_reconstructed_loss:.4f}, val = {avg_val_reconstructed_loss:.4f}")
-        print(f"    Avg KL Loss           : train = {avg_train_kl_loss:.4f}, val = {avg_val_kl_loss}")
+        print(f"    Avg KL Loss           : train = {avg_train_kl_loss:.4f}, val = {avg_val_kl_loss:.4f}")
 
         if avg_val_loss < min_loss:
             min_loss = avg_val_loss

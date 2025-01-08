@@ -13,11 +13,11 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 
 class CustomDataset(Dataset):
-    def __init__(self, path_to_dir, split, data, num_channels, transform=None):
+    def __init__(self, path_to_dir, split, data, input_dim, transform=None):
         self.path_to_dir = path_to_dir
         self.split = split
         self.data = data
-        self.num_channels = num_channels
+        self.input_dim = input_dim
         if transform is None:
             transform = transforms.Compose([
                 transforms.Resize((224, 224)),
@@ -31,20 +31,20 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         img_path = os.path.join(self.path_to_dir, self.split, self.data[idx])
         img = Image.open(img_path)
-        if self.num_channels != 4:
-            if self.num_channels == 3:
+        if self.input_dim != 4:
+            if self.input_dim == 3:
                 img = img.convert("RGB")
             else:
-                raise ValueError("num_channels should be 3 or 4.")
+                raise ValueError("input_dim should be 3 or 4.")
         img = self.transform(img)
         return img
 
-def prepare_data(path_to_dir, num_channels, batch_size=32, transform=None):
+def prepare_data(path_to_dir, input_dim, batch_size=32, transform=None):
     train_data = os.listdir(os.path.join(path_to_dir, "train"))
     val_data = os.listdir(os.path.join(path_to_dir, "val"))
 
-    train_dataset = CustomDataset(path_to_dir, "train", train_data, num_channels, transform)
-    val_dataset = CustomDataset(path_to_dir, "val", val_data, num_channels, transform)
+    train_dataset = CustomDataset(path_to_dir, "train", train_data, input_dim, transform)
+    val_dataset = CustomDataset(path_to_dir, "val", val_data, input_dim, transform)
 
     train_dataloader = DataLoader(train_dataset, batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size, shuffle=False)
@@ -142,15 +142,15 @@ def train_model(num_epochs, model, train_dataloader, val_dataloader, optimizer, 
     plt.grid()
     plt.savefig(os.path.join(path_to_checkpoint, "loss.png"), dpi=300, bbox_inches='tight')
 
-def main(num_epochs, latent_dim, num_channels, batch_size, lr, alpha, path_to_checkpoint, path_to_data):
-    train_dataloader, val_dataloader = prepare_data(path_to_data, num_channels, batch_size)
+def main(num_epochs, latent_dim, input_dim, batch_size, lr, alpha, path_to_checkpoint, path_to_data):
+    train_dataloader, val_dataloader = prepare_data(path_to_data, input_dim, batch_size)
 
-    model = VAE(latent_dim, num_channels)
+    model = VAE(latent_dim, input_dim)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     optimizer = optim.Adam(model.parameters(), lr)
 
     print(f"Details of training:")
-    print(f"    Epochs = {num_epochs}, Latent dim = {latent_dim}, Num channels = {num_channels}")
+    print(f"    Epochs = {num_epochs}, Latent dim = {latent_dim}, Input dim = {input_dim}")
     print(f"    Batch size = {batch_size}, Alpha = {alpha}, Device = {device}, Save checkpoint = {path_to_checkpoint}")
     print("Ready Training !!!")
 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hyper-parameters for training")
     parser.add_argument("--epoch", type=int, help="No. of epochs for training", default=50)
     parser.add_argument("--latent_dim", type=int, help="No. dim of latent space", default=1024)
-    parser.add_argument("--num_channels", type=int, help="No. channels of images", default=4)
+    parser.add_argument("--input_dim", type=int, help="No. channels of images", default=4)
     parser.add_argument("--lr", type=float, help="Learning rate", default=1e-4)
     parser.add_argument("--batch_size", type=int, help="Batch size", default=32)
     parser.add_argument("--alpha", type=float, help="Loss factor", default=3.0)
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     main(
         num_epochs=args.epoch, latent_dim=args.latent_dim,
-        num_channels=args.num_channels, batch_size=args.batch_size,
+        input_dim=args.input_dim, batch_size=args.batch_size,
         lr=args.lr, alpha=args.alpha,
         path_to_checkpoint=args.path_checkpoint,
         path_to_data=args.path_data

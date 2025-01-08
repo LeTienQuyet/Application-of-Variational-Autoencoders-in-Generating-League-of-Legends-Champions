@@ -29,24 +29,17 @@ class Encoder_Block(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self, latent_dim=1024, num_channels=4):
+    def __init__(self, latent_dim=1024, input_dim=4):
         super(Encoder, self).__init__()
-        self.encoder_block_1 = Encoder_Block(
-            in_channels=num_channels, out_channels=8,
-            kernel_size=3, stride=1, padding=1
-        )
-        self.encoder_block_2 = Encoder_Block(
-            in_channels=8, out_channels=32,
-            kernel_size=3, stride=1, padding=1
-        )
-        self.encoder_block_3 = Encoder_Block(
-            in_channels=32, out_channels=128,
-            kernel_size=3, stride=1, padding=1
-        )
-        self.encoder_block_4 = Encoder_Block(
-            in_channels=128, out_channels=512,
-            kernel_size=3, stride=1, padding=1
-        )
+
+        num_channels = [input_dim, 8, 32, 128, 512]
+
+        self.feature = nn.ModuleList([
+            Encoder_Block(
+                in_channels=num_channels[i], out_channels=num_channels[i+1],
+                kernel_size=3, stride=1, padding=1
+            ) for i in range(len(num_channels)-1)
+        ])
         self.pooling = nn.MaxPool2d(
             kernel_size=2,
             stride=2
@@ -59,19 +52,17 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(p=0.5)
         self.mu = nn.Linear(
             in_features=4096,
-            out_features=latent_dim
+            out_features=1024
         )
         self.log_var = nn.Linear(
             in_features=4096,
-            out_features=latent_dim
+            out_features=1024
         )
 
     def forward(self, x):
         "Image shape = (224, 224, [4, 3])"
-        x = self.encoder_block_1(x) # -> (112, 112, 8)
-        x = self.encoder_block_2(x) # -> (56, 56, 32)
-        x = self.encoder_block_3(x) # -> (28, 28, 128)
-        x = self.encoder_block_4(x) # -> (14, 14, 512)
+        for encoder_block in self.feature:
+            x = encoder_block(x)    # -> (112, 112, 8) -> (56, 56, 32) -> (28, 28, 128) -> (14, 14, 512)
         x = self.pooling(x)         # -> (7, 7, 512)
         x = x.view(x.size(0), -1)   # -> (25088)
         x = self.linear(x)          # -> (4096)

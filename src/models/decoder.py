@@ -26,8 +26,18 @@ class Decoder_Block(nn.Module):
         return x
 
 class Decoder(nn.Module):
-    def __init__(self, latent_dim=1024, num_channels=4):
+    def __init__(self, latent_dim=1024, input_dim=4):
         super(Decoder, self).__init__()
+
+        num_channels = [512, 256, 128, 64, 32, input_dim]
+
+        self.feature = nn.ModuleList([
+            Decoder_Block(
+                in_channels=num_channels[i], out_channels=num_channels[i+1],
+                kernel_size=3, stride=2, padding=1,
+                output_padding_1=1, output_padding_2=0
+            ) for i in range(len(num_channels)-1)
+        ])
         self.linear_1 = nn.Linear(
             in_features=latent_dim,
             out_features=4096
@@ -38,31 +48,6 @@ class Decoder(nn.Module):
         )
         self.active_func = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(p=0.5)
-        self.decoder_block_1 = Decoder_Block(
-            in_channels=512, out_channels=256,
-            kernel_size=3, stride=2, padding=1,
-            output_padding_1=1, output_padding_2=0
-        )
-        self.decoder_block_2 = Decoder_Block(
-            in_channels=256, out_channels=128,
-            kernel_size=3, stride=2, padding=1,
-            output_padding_1=1, output_padding_2=0
-        )
-        self.decoder_block_3 = Decoder_Block(
-            in_channels=128, out_channels=64,
-            kernel_size=3, stride=2, padding=1,
-            output_padding_1=1, output_padding_2=0
-        )
-        self.decoder_block_4= Decoder_Block(
-            in_channels=64, out_channels=32,
-            kernel_size=3, stride=2, padding=1,
-            output_padding_1=1, output_padding_2=0
-        )
-        self.decoder_block_5 = Decoder_Block(
-            in_channels=32, out_channels=num_channels,
-            kernel_size=3, stride=2, padding=1,
-            output_padding_1=1, output_padding_2=0
-        )
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -74,10 +59,7 @@ class Decoder(nn.Module):
         x = self.active_func(x)          # -> (25088)
         x = self.dropout(x)              # -> (25088)
         x = x.view(x.size(0), 512, 7, 7) # -> (7, 7, 512)
-        x = self.decoder_block_1(x)      # -> (14, 14, 256)
-        x = self.decoder_block_2(x)      # -> (28, 28, 128)
-        x = self.decoder_block_3(x)      # -> (56, 56, 64)
-        x = self.decoder_block_4(x)      # -> (112, 112, 32)
-        x = self.decoder_block_5(x)      # -> (224, 224, [4, 3])
+        for decoder_block in self.feature:
+            x = decoder_block(x)         # -> (14, 14, 256) -> (28, 28, 128) -> (56, 56, 64) -> (112, 112, 32) -> (224, 224, [4, 3])
         x = self.sigmoid(x)
         return x

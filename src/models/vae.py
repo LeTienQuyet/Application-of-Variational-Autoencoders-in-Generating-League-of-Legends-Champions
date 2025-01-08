@@ -5,10 +5,10 @@ import torch
 import torch.nn as nn
 
 class VAE(nn.Module):
-    def __init__(self, latent_dim, num_channels):
+    def __init__(self, latent_dim, input_dim):
         super(VAE, self).__init__()
-        self.encoder = Encoder(latent_dim, num_channels)
-        self.decoder = Decoder(latent_dim, num_channels)
+        self.encoder = Encoder(latent_dim, input_dim)
+        self.decoder = Decoder(latent_dim, input_dim)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)

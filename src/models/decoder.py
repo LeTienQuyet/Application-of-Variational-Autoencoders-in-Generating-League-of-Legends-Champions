@@ -16,12 +16,16 @@ class Decoder_Block(nn.Module):
             padding=padding, output_padding=output_padding_2,
             bias=True
         )
+        self.bn1 = nn.BatchNorm2d(num_features=in_channels)
+        self.bn2 = nn.BatchNorm2d(num_features=out_channels)
         self.active_func = nn.ReLU(inplace=True)
 
     def forward(self, x):
         x = self.trans_conv1(x)
+        x = self.bn1(x)
         x = self.active_func(x)
         x = self.trans_conv2(x)
+        x = self.bn2(x)
         x = self.active_func(x)
         return x
 

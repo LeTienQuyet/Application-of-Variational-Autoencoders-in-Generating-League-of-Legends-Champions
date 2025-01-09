@@ -14,6 +14,8 @@ class Encoder_Block(nn.Module):
             kernel_size=kernel_size, stride=stride,
             padding=padding, bias=True
         )
+        self.bn1 = nn.BatchNorm2d(num_features=int(out_channels/2))
+        self.bn2 = nn.BatchNorm2d(num_features=out_channels)
         self.active_func = nn.ReLU(inplace=True)
         self.pooling = nn.MaxPool2d(
             kernel_size=2,
@@ -22,8 +24,10 @@ class Encoder_Block(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
+        x = self.bn1(x)
         x = self.active_func(x)
         x = self.conv2(x)
+        x = self.bn2(x)
         x = self.active_func(x)
         x = self.pooling(x)
         return x
@@ -52,11 +56,11 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(p=0.5)
         self.mu = nn.Linear(
             in_features=4096,
-            out_features=1024
+            out_features=latent_dim
         )
         self.log_var = nn.Linear(
             in_features=4096,
-            out_features=1024
+            out_features=latent_dim
         )
 
     def forward(self, x):

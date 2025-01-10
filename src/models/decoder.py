@@ -19,14 +19,22 @@ class Decoder_Block(nn.Module):
         self.bn1 = nn.BatchNorm2d(num_features=in_channels)
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
         self.active_func = nn.ReLU(inplace=True)
+        self.res_connect = nn.ConvTranspose2d(
+            in_channels=in_channels, out_channels=out_channels,
+            kernel_size=1, stride=2,
+            padding=0, output_padding=1,
+            bias=True
+        )
 
     def forward(self, x):
+        x_residual = self.res_connect(x)
         x = self.trans_conv1(x)
         x = self.bn1(x)
         x = self.active_func(x)
         x = self.trans_conv2(x)
         x = self.bn2(x)
         x = self.active_func(x)
+        x = x + x_residual
         return x
 
 class Decoder(nn.Module):

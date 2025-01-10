@@ -21,14 +21,20 @@ class Encoder_Block(nn.Module):
             kernel_size=2,
             stride=2
         )
+        self.res_connect = nn.Conv2d(
+            in_channels=in_channels, out_channels=out_channels,
+            kernel_size=1, stride=1, bias=True
+        )
 
     def forward(self, x):
+        x_residual = self.res_connect(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.active_func(x)
         x = self.conv2(x)
         x = self.bn2(x)
         x = self.active_func(x)
+        x = x + x_residual
         x = self.pooling(x)
         return x
 

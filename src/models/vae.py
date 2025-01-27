@@ -1,5 +1,5 @@
-from src.models.encoder import Encoder
-from src.models.decoder import Decoder
+from encoder import Encoder
+from decoder import Decoder
 
 import torch
 import torch.nn as nn
@@ -7,6 +7,7 @@ import torch.nn as nn
 class VAE(nn.Module):
     def __init__(self, latent_dim, input_dim):
         super(VAE, self).__init__()
+        self.latent_dim = latent_dim
         self.encoder = Encoder(latent_dim, input_dim)
         self.decoder = Decoder(latent_dim, input_dim)
 

@@ -8,33 +8,40 @@ class Decoder_Block(nn.Module):
             in_channels=in_channels, out_channels=in_channels,
             kernel_size=kernel_size, stride=stride,
             padding=padding, output_padding=output_padding_1,
-            bias=True
         )
         self.trans_conv2 = nn.ConvTranspose2d(
             in_channels=in_channels, out_channels=out_channels,
             kernel_size=kernel_size, stride=int(stride/2),
             padding=padding, output_padding=output_padding_2,
-            bias=True
         )
         self.bn1 = nn.BatchNorm2d(num_features=in_channels)
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
         self.active_func = nn.ReLU(inplace=True)
-        self.res_connect = nn.ConvTranspose2d(
+
+        self.trans_conv1_res_connect = nn.ConvTranspose2d(
+            in_channels=in_channels, out_channels=in_channels,
+            kernel_size=1, stride=2,
+            padding=0, output_padding=1,
+        )
+        self.trans_conv2_res_connect = nn.ConvTranspose2d(
             in_channels=in_channels, out_channels=out_channels,
             kernel_size=1, stride=2,
             padding=0, output_padding=1,
-            bias=True
         )
 
     def forward(self, x):
-        x_residual = self.res_connect(x)
+        x_residual_1 = self.trans_conv1_res_connect(x)
+        x_residual_2 = self.trans_conv2_res_connect(x)
+
         x = self.trans_conv1(x)
+        x = x + x_residual_1
         x = self.bn1(x)
         x = self.active_func(x)
+
         x = self.trans_conv2(x)
+        x = x + x_residual_2
         x = self.bn2(x)
         x = self.active_func(x)
-        x = x + x_residual
         return x
 
 class Decoder(nn.Module):
@@ -50,24 +57,18 @@ class Decoder(nn.Module):
                 output_padding_1=1, output_padding_2=0
             ) for i in range(len(num_channels)-1)
         ])
-        self.linear_1 = nn.Linear(
+        self.linear = nn.Linear(
             in_features=latent_dim,
-            out_features=4096
-        )
-        self.linear_2 = nn.Linear(
-            in_features=4096,
             out_features=25088
         )
+        self.bn = nn.BatchNorm1d(num_features=25088)
         self.active_func = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(p=0.5)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        "Sampling reparameterize shape = (latent_dim = 1024)"
-        x = self.linear_1(x)             # -> (4096)
-        x = self.active_func(x)          # -> (4096)
-        x = self.dropout(x)              # -> (4096)
-        x = self.linear_2(x)             # -> (25088)
+        x = self.linear(x)               # -> (25088)
+        x = self.bn(x)                   # -> (25088)
         x = self.active_func(x)          # -> (25088)
         x = self.dropout(x)              # -> (25088)
         x = x.view(x.size(0), 512, 7, 7) # -> (7, 7, 512)

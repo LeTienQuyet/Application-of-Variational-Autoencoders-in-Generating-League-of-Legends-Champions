@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class Encoder_Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding):
@@ -7,12 +8,12 @@ class Encoder_Block(nn.Module):
         self.conv1 = nn.Conv2d(
             in_channels=in_channels, out_channels=int(out_channels/2),
             kernel_size=kernel_size, stride=stride,
-            padding=padding, bias=True
+            padding=padding
         )
         self.conv2 = nn.Conv2d(
             in_channels=int(out_channels/2), out_channels=out_channels,
             kernel_size=kernel_size, stride=stride,
-            padding=padding, bias=True
+            padding=padding
         )
         self.bn1 = nn.BatchNorm2d(num_features=int(out_channels/2))
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
@@ -21,20 +22,28 @@ class Encoder_Block(nn.Module):
             kernel_size=2,
             stride=2
         )
-        self.res_connect = nn.Conv2d(
+        self.conv1_res_connect = nn.Conv2d(
+            in_channels=in_channels, out_channels=int(out_channels/2),
+            kernel_size=1, stride=1
+        )
+        self.conv2_res_connect = nn.Conv2d(
             in_channels=in_channels, out_channels=out_channels,
-            kernel_size=1, stride=1, bias=True
+            kernel_size=1, stride=1
         )
 
     def forward(self, x):
-        x_residual = self.res_connect(x)
+        x_residual_1 = self.conv1_res_connect(x)
+        x_residual_2 = self.conv2_res_connect(x)
+
         x = self.conv1(x)
+        x = x + x_residual_1
         x = self.bn1(x)
         x = self.active_func(x)
+
         x = self.conv2(x)
+        x = x + x_residual_2
         x = self.bn2(x)
         x = self.active_func(x)
-        x = x + x_residual
         x = self.pooling(x)
         return x
 
@@ -54,30 +63,26 @@ class Encoder(nn.Module):
             kernel_size=2,
             stride=2
         )
-        self.linear = nn.Linear(
-            in_features=25088,
-            out_features=4096,
-        )
+        self.bn = nn.BatchNorm1d(num_features=25088)
         self.active_func = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(p=0.5)
         self.mu = nn.Linear(
-            in_features=4096,
+            in_features=25088,
             out_features=latent_dim
         )
         self.log_var = nn.Linear(
-            in_features=4096,
+            in_features=25088,
             out_features=latent_dim
         )
 
     def forward(self, x):
-        "Image shape = (224, 224, [4, 3])"
         for encoder_block in self.feature:
-            x = encoder_block(x)    # -> (112, 112, 8) -> (56, 56, 32) -> (28, 28, 128) -> (14, 14, 512)
-        x = self.pooling(x)         # -> (7, 7, 512)
-        x = x.view(x.size(0), -1)   # -> (25088)
-        x = self.linear(x)          # -> (4096)
-        x = self.active_func(x)     # -> (4096)
-        x = self.dropout(x)         # -> (4096)
-        mu = self.mu(x)             # -> (latent_dim = 1024)
-        log_var = self.log_var(x)   # -> (latent_dim = 1024)
+            x = encoder_block(x)      # -> (112, 112, 8) -> (56, 56, 32) -> (28, 28, 128) -> (14, 14, 512)
+        x = self.pooling(x)           # -> (7, 7, 512)
+        x = x.view(x.size(0), -1)     # -> (25088)
+        x = self.bn(x)                # -> (25088)
+        x = self.active_func(x)       # -> (25088)
+        x = self.dropout(x)           # -> (25088)
+        mu = self.mu(x)               # -> (latent_dim)
+        log_var = self.log_var(x)     # -> (latent_dim)
         return mu, log_var

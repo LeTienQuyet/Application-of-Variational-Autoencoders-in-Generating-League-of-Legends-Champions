@@ -5,21 +5,21 @@ class Decoder_Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, output_padding_1, output_padding_2):
         super(Decoder_Block, self).__init__()
         self.trans_conv1 = nn.ConvTranspose2d(
-            in_channels=in_channels, out_channels=in_channels,
+            in_channels=in_channels, out_channels=int(in_channels/2),
             kernel_size=kernel_size, stride=stride,
             padding=padding, output_padding=output_padding_1,
         )
         self.trans_conv2 = nn.ConvTranspose2d(
-            in_channels=in_channels, out_channels=out_channels,
+            in_channels=int(in_channels/2), out_channels=out_channels,
             kernel_size=kernel_size, stride=int(stride/2),
             padding=padding, output_padding=output_padding_2,
         )
-        self.bn1 = nn.BatchNorm2d(num_features=in_channels)
+        self.bn1 = nn.BatchNorm2d(num_features=int(in_channels/2))
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
         self.active_func = nn.ReLU(inplace=True)
 
         self.trans_conv1_res_connect = nn.ConvTranspose2d(
-            in_channels=in_channels, out_channels=in_channels,
+            in_channels=in_channels, out_channels=int(in_channels/2),
             kernel_size=1, stride=2,
             padding=0, output_padding=1,
         )
@@ -61,15 +61,11 @@ class Decoder(nn.Module):
             in_features=latent_dim,
             out_features=25088
         )
-        self.bn = nn.BatchNorm1d(num_features=25088)
-        self.active_func = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(p=0.5)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.linear(x)               # -> (25088)
-        x = self.bn(x)                   # -> (25088)
-        x = self.active_func(x)          # -> (25088)
         x = self.dropout(x)              # -> (25088)
         x = x.view(x.size(0), 512, 7, 7) # -> (7, 7, 512)
         for decoder_block in self.feature:
